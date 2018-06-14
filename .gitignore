@@ -1,0 +1,9 @@
+.DS_Store
+*.bak
+*.sublime-project
+*.sublime-workspace
+.idea
+/build
+/node_modules
+npm-debug.log
+.vscode
