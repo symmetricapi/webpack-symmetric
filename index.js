@@ -63,7 +63,7 @@ function createBackendProxy(options) {
     },
     onProxyReq: (proxyReq, req) => {
       // If backend does not match, omit the sessionid so that a new one is made
-      if (!backendCookieRe.test(req.headers.cookie || '')) {
+      if (req.headers.cookie && !backendCookieRe.test(req.headers.cookie)) {
         req.headers.cookie.replace(sessionCookieRe, '');
       }
     },
