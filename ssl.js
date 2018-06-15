@@ -51,6 +51,7 @@ function createSelfSignedCert(options) {
       child_process.execSync(`security add-trusted-cert -k ~/Library/Keychains/login.keychain ${caCert}`);
     } catch (err) {
       console.log('Skipping - security command not available.');
+      console.log(`NOTE: Before proceeding please be sure to add ${caCert} as a trusted root cert to your system.`);
     }
   }
 
