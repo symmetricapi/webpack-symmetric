@@ -1,6 +1,6 @@
 {
   "name": "webpack-symmetric",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Webpack dev server configurations for running a proxy to a backend including self-signed certs.",
   "license": "MIT",
   "main": "index.js",

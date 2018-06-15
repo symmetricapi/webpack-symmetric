@@ -106,4 +106,4 @@ function createBackendProxy(options) {
   return proxy;
 }
 
-module.exports = createBackendProxy;
+module.exports = { createBackendProxy };
