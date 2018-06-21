@@ -8,6 +8,7 @@ const opensslReq = 'openssl req -nodes -newkey rsa:2048';
 const opensslSign = 'openssl x509 -req -days 9999 -sha256';
 const caSubj = '"/C=US/ST=California/L=Berkeley/O=Symmetric/OU=Engineering/CN=Symmetric Proxy CA"';
 const subj = '"/C=US/ST=California/L=Berkeley/O=Symmetric/OU=Engineering/CN=Symmetric Proxy"';
+const keymoji = '\u{1F510} ';
 
 /**
  * Create a self-signed cert, save it to ~/.symmetric and then add it as a trusted cert to the keychain.
@@ -42,11 +43,11 @@ function createSelfSignedCert(options) {
 
   if (!fs.existsSync(caKey) || !fs.existsSync(caCert)) {
     // Generate a self-signed root cert
-    console.log('Generating self-signed root cert...');
+    console.log(keymoji, 'Generating self-signed root cert...');
     child_process.execSync(`${opensslCA} -keyout ${caKey} -out ${caCert} -subj ${caSubj}`);
 
     // Add the CA cert to the keychain
-    console.log('Adding to keychain...');
+    console.log(keymoji, 'Adding to keychain...');
     try {
       child_process.execSync(`security add-trusted-cert -k ~/Library/Keychains/login.keychain ${caCert}`);
     } catch (err) {
@@ -71,18 +72,26 @@ function createSelfSignedCert(options) {
     // Get public IP address
     addIP(child_process.execSync('dig +short myip.opendns.com @resolver1.opendns.com').toString().trim());
   } catch (err) { }
-  fs.writeFileSync(ext, `
+
+  // Create the ext alt-names and compare to the alt-names of the existing cert
+  const extData = `
     subjectAltName = @alt_names
 
     [ alt_names ]
     ${altDomainNames.map((domain, index) => `DNS.${index + 1} = ${domain}`).join('\n')}
     ${altIPs.map((ip, index) => `IP.${index + 1} = ${ip}`).join('\n')}
-  `.replace(/  /g, ''));
-
-  // Generate a cert signing request
-  child_process.execSync(`${opensslReq} -keyout ${key} -out ${csr} -subj ${subj}`);
-  // Sign the request
-  child_process.execSync(`${opensslSign} -CA ${caCert} -CAkey ${caKey} -CAcreateserial -in ${csr} -out ${cert} -extfile ${ext}`);
+  `.replace(/  /g, '');
+  if (fs.existsSync(ext) && fs.readFileSync(ext).toString() === extData && fs.existsSync(key) && fs.existsSync(cert)) {
+    console.log(keymoji, 'Using existing SSL cert and key...');
+  } else {
+    console.log(keymoji, 'Creating new SSL cert and key...');
+    // Save the ext file
+    fs.writeFileSync(ext, extData);
+    // Generate a cert signing request
+    child_process.execSync(`${opensslReq} -keyout ${key} -out ${csr} -subj ${subj}`);
+    // Sign the request
+    child_process.execSync(`${opensslSign} -CA ${caCert} -CAkey ${caKey} -CAcreateserial -in ${csr} -out ${cert} -extfile ${ext}`);
+  }
 
   return {
     key,

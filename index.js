@@ -1,4 +1,5 @@
 const fs = require('fs');
+const zlib = require('zlib');
 const createSelfSignedCert = require('./ssl');
 
 const STANDARD_PATHS = ['api', 'login', 'logout', 'auth', 'deauth', 'setup', 'callback', 'static', '__debug__'];
@@ -11,12 +12,14 @@ const BACKEND_COOKIE = 'proxybackend';
  * @param {string} options.backend - The backend origin to proxy to
  * @param {Array} [options.paths] - The first-level URL paths to match and proxy to the backend
  * @param {Array} [options.subpaths] - The second-level URL paths to match and proxy to the backend
+ * @param {Array} [options.originRewrites] - Array of origins to localize as relative paths instead when found under src or href attributes in a proxied response
  * @param {Boolean} [options.insecure] - If true, run the server as http instead of self-signed https
  * @param {Object} [options.ssl] - Options to pass into createSelfSignedCert()
  * @returns - An object appropriate to pass in with a path key of the proxy setting of devServer
  * @description
  * All options come from https://github.com/nodejitsu/node-http-proxy
  * https://github.com/chimurai/http-proxy-middleware
+ *
  * With this configuration, the apiclient auth flow is:
  * 1. Navigate to local /auth
  * 2. Proxy sends request to /auth on backend
@@ -37,6 +40,11 @@ function createBackendProxy(options) {
   const backendCookieRe = new RegExp(`${BACKEND_COOKIE}=${backend};?`);
   const sessionCookieRe = /sessionid=\w+;?/;
 
+  // Remove any slashes from the paths
+  paths.forEach((path, i) => { paths[i] = path.replace(/\//g,''); });
+  subpaths.forEach((subpath, i) => { subpaths[i] = subpath.replace(/\//g,''); });
+
+  // Add the standard paths
   paths.splice(-1, 0, ...STANDARD_PATHS);
   subpaths.splice(-1, 0, ...STANDARD_SUBPATHS);
 
@@ -61,18 +69,27 @@ function createBackendProxy(options) {
       }
       return req.url;
     },
-    onProxyReq: (proxyReq, req) => {
-      // If backend does not match, omit the sessionid so that a new one is made
-      if (req.headers.cookie && !backendCookieRe.test(req.headers.cookie)) {
-        req.headers.cookie.replace(sessionCookieRe, '');
+    // If backend does not match then remove the sessionid from the proxyReq to the backend
+    // NOTE: args for onProxyReq are - proxyReq (ClientRequest), req (IncomingMessage), res (ServerResponse)
+    onProxyReq: (proxyReq) => {
+      const cookies = proxyReq.getHeader('cookie');
+      if (cookies && !backendCookieRe.test(cookies)) {
+        proxyReq.setHeader('cookie', cookies.replace(sessionCookieRe, ''));
       }
     },
+    // If backend cookie does not match or is missing then set it in the response from the backend
+    // Also delete the sessionid cookie if a new one is not supplied by the backend
+    // NOTE: args for onProxyRes are - proxyRes (IncomingMessage), req (IncomingMessage), res (ServerResponse)
     onProxyRes: (proxyRes, req) => {
-      // If backend does not match or missing, set it in the response
       if (!backendCookieRe.test(req.headers.cookie || '')) {
         let resCookies = proxyRes.headers['set-cookie'] || [];
         if (!Array.isArray(resCookies)) resCookies = [resCookies];
-        resCookies.push(`${BACKEND_COOKIE}=${backend}`);
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 365);
+        resCookies.push(`${BACKEND_COOKIE}=${backend}; expires=${expires.toUTCString()}; path=/`);
+        if (resCookies.filter(cookie => sessionCookieRe.test(cookie)).length === 0) {
+          resCookies.push(`sessionid=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/`)
+        }
         proxyRes.headers['set-cookie'] = resCookies;
       }
     },
@@ -100,6 +117,33 @@ function createBackendProxy(options) {
     proxy.ssl = {
       key: fs.readFileSync(sslFiles.key),
       cert: fs.readFileSync(sslFiles.cert),
+    };
+  }
+
+  if (options.originRewrites && options.originRewrites.length) {
+    const re = new RegExp(`${options.originRewrites.join('|')}`, 'ig');
+    const { onProxyRes } = proxy;
+    proxy.onProxyRes = (proxyRes, req, res) => {
+      if (onProxyRes) onProxyRes.call(proxy, proxyRes, req, res);
+      if (proxyRes.headers['content-type'].indexOf('text/html') !== -1) {
+        // Handle the data piping manually by disabling pipe()
+        // Do not use selfHandleResponse options because it would disable a number of other features
+        // https://github.com/nodejitsu/node-http-proxy/blob/e94d52973a26cf817a9de12d97e5ae603093f70d/lib/http-proxy/passes/web-incoming.js#L173
+        let body = new Buffer('');
+        proxyRes.pipe = () => {};
+        proxyRes.on('data', (data) => {
+          body = Buffer.concat([body, data]);
+        });
+        proxyRes.on('end', () => {
+          if (res.hasHeader('content-encoding') && res.getHeader('content-encoding') === 'gzip') {
+            body = zlib.gunzipSync(body);
+          }
+          body = body.toString().replace(re, '');
+          // Remove the content-encoding as it is no longer gzip
+          res.removeHeader('content-encoding');
+          res.end(body);
+        });
+      }
     };
   }
 

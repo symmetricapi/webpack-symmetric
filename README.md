@@ -22,6 +22,7 @@ The only required option is `backend`, everything else is optional.
 * `backend` - The backend origin to proxy to
 * `paths` - The first-level URL paths to match and proxy to the backend
 * `subpaths` - The second-level URL paths to match and proxy to the backend
+* `originRewrites` - Array of origins to localize as relative paths instead when found under src or href attributes in a proxied response
 * `insecure` - If true, run the server as http instead of self-signed https
 * `ssl.additionalDomains` - Additional domain names to add as alternate names allowed with the SSL cert
 * `ssl.additionalIPs` - Additional IP addresses to add as alternate names allowed with the SSL cert
