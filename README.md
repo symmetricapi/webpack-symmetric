@@ -11,6 +11,8 @@ The generated proxy configuration will do the following things:
 * Generate a self-signed root cert and add it as trusted to your keychain. So no browser warnings should ever popup.
 * Generate a root signed cert used in the proxy, which includes standard alternate names of `localhost`, `<host>.local`, `127.0.0.1`, any other detected interface ips, and your externally facing ip.
 
+**NOTE: SSL cert generation only happens when `webpack` is run as `webpack-dev-server`**
+
 ## The root CA cert
 
 In order to avoid warnings in your browser make sure that the root CA cert is installed as a trusted root cert in your system after the first time running webpack server. This only needs to be done once and not repeated for every project. On OSX this is done automatically but look for a console message on other systems.

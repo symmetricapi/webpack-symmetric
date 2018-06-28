@@ -110,14 +110,17 @@ function createBackendProxy(options) {
       if (onProxyRes) onProxyRes.call(proxy, proxyRes, req, res);
     };
   } else {
-    const sslFiles = createSelfSignedCert(options.ssl);
     // Just in case of an insecure vagrant-based backend 30x redirects should be changed to secure
     proxy.protocolRewrite = 'https';
-    // ssl options: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
-    proxy.ssl = {
-      key: fs.readFileSync(sslFiles.key),
-      cert: fs.readFileSync(sslFiles.cert),
-    };
+    // Create the SSL cert only when webpack is running as a dev server
+    if (process.argv.find(arg => arg.includes('webpack-dev-server'))) {
+      const sslFiles = createSelfSignedCert(options.ssl);
+      // ssl options: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+      proxy.ssl = {
+        key: fs.readFileSync(sslFiles.key),
+        cert: fs.readFileSync(sslFiles.cert),
+      };
+    }
   }
 
   if (options.originRewrites && options.originRewrites.length) {
