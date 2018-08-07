@@ -17,6 +17,10 @@ The generated proxy configuration will do the following things:
 
 In order to avoid warnings in your browser make sure that the root CA cert is installed as a trusted root cert in your system after the first time running webpack server. This only needs to be done once and not repeated for every project. On OSX this is done automatically but look for a console message on other systems.
 
+### Installing the root CA cert on other devices
+
+See `certServer` setting below and follow the directions. Alternatively, set a `CERT_SERVER=true` environment variable.
+
 ## `createBackendProxy` options
 
 The only required option is `backend`, everything else is optional.
@@ -26,6 +30,7 @@ The only required option is `backend`, everything else is optional.
 * `subpaths` - The second-level URL paths to match and proxy to the backend
 * `originRewrites` - Array of origins to localize as relative paths instead when found under src or href attributes in a proxied response
 * `insecure` - If true, run the server as http instead of self-signed https
+* `certServer` - If true, will run a separate http server on port 3007 with instructions on installing the root cert on other devices
 * `ssl.additionalDomains` - Additional domain names to add as alternate names allowed with the SSL cert
 * `ssl.additionalIPs` - Additional IP addresses to add as alternate names allowed with the SSL cert
 * `ssl.home` - Root directory used to store all generated certs and keys. Also can be given as `SYMMETRIC_HOME` env variable. Defaults to `~/.symmetric`

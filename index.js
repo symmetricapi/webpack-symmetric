@@ -36,6 +36,7 @@ function createBackendProxy(options) {
     paths = [],
     subpaths = [],
     insecure,
+    certServer,
   } = options;
   const backendCookieRe = new RegExp(`${BACKEND_COOKIE}=${backend};?`);
   const sessionCookieRe = /sessionid=\w+;?/;
@@ -120,6 +121,10 @@ function createBackendProxy(options) {
         key: fs.readFileSync(sslFiles.key),
         cert: fs.readFileSync(sslFiles.cert),
       };
+      if (certServer || (process.env.CERT_SERVER && process.env.CERT_SERVER.toLowerCase() !== 'false')) {
+        const startServer = require('./server');
+        startServer(sslFiles.caCert);
+      }
     }
   }
 

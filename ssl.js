@@ -96,6 +96,8 @@ function createSelfSignedCert(options) {
   return {
     key,
     cert,
+    caKey,
+    caCert,
   };
 }
 
