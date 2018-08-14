@@ -20,6 +20,7 @@ const keymoji = '\u{1F510} ';
  * https://github.com/loganstellway/self-signed-ssl/blob/master/self-signed-tls
  * https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-apache-in-ubuntu-16-04
  * https://datacenteroverlords.com/2012/03/01/creating-your-own-ssl-certificate-authority/
+ * To inspect certs that were generated: openssl x509 -text -noout -in symmetric.crt
  */
 function createSelfSignedCert(options) {
   const dir = (options && options.home) || process.env.SYMMETRIC_HOME || path.join(os.homedir(), '.symmetric');
