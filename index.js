@@ -133,7 +133,7 @@ function createBackendProxy(options) {
     const { onProxyRes } = proxy;
     proxy.onProxyRes = (proxyRes, req, res) => {
       if (onProxyRes) onProxyRes.call(proxy, proxyRes, req, res);
-      if (proxyRes.headers['content-type'].indexOf('text/html') !== -1) {
+      if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].indexOf('text/html') !== -1) {
         // Handle the data piping manually by disabling pipe()
         // Do not use selfHandleResponse options because it would disable a number of other features
         // https://github.com/nodejitsu/node-http-proxy/blob/e94d52973a26cf817a9de12d97e5ae603093f70d/lib/http-proxy/passes/web-incoming.js#L173
