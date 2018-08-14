@@ -25,6 +25,7 @@ function createSelfSignedCert(options) {
   const dir = (options && options.home) || process.env.SYMMETRIC_HOME || path.join(os.homedir(), '.symmetric');
   const caKey = path.join(dir, 'symmetric_ca.key');
   const caCert = path.join(dir, 'symmetric_ca.crt');
+  const caExt = path.join(dir, 'symmetric_ca.ext');
   const key = path.join(dir, 'symmetric.key');
   const csr = path.join(dir, 'symmetric.csr');
   const cert = path.join(dir, 'symmetric.crt');
@@ -42,9 +43,23 @@ function createSelfSignedCert(options) {
   } catch (err) { }
 
   if (!fs.existsSync(caKey) || !fs.existsSync(caCert)) {
+    // Create the ext config for setting CA bits to true in the cert
+    // This is required so that Android will install the cert as "Trusted credentials"
+    const caExtData = `
+    [ req ]
+    req_extensions=v3_ca
+    distinguished_name=req_distinguished_name
+
+    [ req_distinguished_name ]
+
+    [ v3_ca ]
+    basicConstraints=CA:true
+    `.replace(/  /g, '');
+    fs.writeFileSync(caExt, caExtData);
+
     // Generate a self-signed root cert
     console.log(keymoji, 'Generating self-signed root cert...');
-    child_process.execSync(`${opensslCA} -keyout ${caKey} -out ${caCert} -subj ${caSubj}`);
+    child_process.execSync(`${opensslCA} -keyout ${caKey} -out ${caCert} -config ${caExt} -extensions v3_ca -subj ${caSubj}`);
 
     // Add the CA cert to the keychain
     console.log(keymoji, 'Adding to keychain...');
