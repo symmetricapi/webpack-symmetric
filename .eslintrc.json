@@ -1,0 +1,87 @@
+{
+  "extends": ["eslint:recommended"],
+  "plugins": [],
+  "root": true,
+  "env": {
+    "es6": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2018
+  },
+  "rules": {
+    "arrow-body-style": ["error", "as-needed"],
+    "arrow-parens": ["error", "as-needed"],
+    "brace-style": [
+      "error",
+      "1tbs",
+      {
+        "allowSingleLine": true
+      }
+    ],
+    "block-scoped-var": "error",
+    "camelcase": "error",
+    "consistent-return": "error",
+    "curly": ["error", "multi-line"],
+    "dot-location": ["error", "property"],
+    "dot-notation": "error",
+    "eqeqeq": "error",
+    "function-paren-newline": ["error", "consistent"],
+    "no-cond-assign": ["error", "except-parens"],
+    "no-confusing-arrow": [
+      "error",
+      {
+        "allowParens": true
+      }
+    ],
+    "no-else-return": "error",
+    "no-empty": [
+      "error",
+      {
+        "allowEmptyCatch": true
+      }
+    ],
+    "no-floating-decimal": "error",
+    "no-loop-func": "error",
+    "no-multi-str": "error",
+    "no-new": "error",
+    "no-new-wrappers": "error",
+    "no-param-reassign": [
+      "error",
+      {
+        "props": false
+      }
+    ],
+    "no-path-concat": "error",
+    "no-shadow": "error",
+    "no-shadow-restricted-names": "error",
+    "no-unused-vars": [
+      "error",
+      {
+        "varsIgnorePattern": "^React|h$"
+      }
+    ],
+    "no-use-before-define": "error",
+    "no-useless-computed-key": "error",
+    "no-useless-concat": "error",
+    "no-var": "error",
+    "object-shorthand": [
+      "error",
+      "always",
+      {
+        "avoidQuotes": true
+      }
+    ],
+    "prefer-arrow-callback": "error",
+    "prefer-const": "error",
+    "prefer-destructuring": "error",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
+    "prefer-template": "error",
+    "strict": ["error", "never"],
+    "vars-on-top": "error",
+    "wrap-iife": ["error", "outside"],
+    "no-console": "off",
+    "no-buffer-constructor": "error"
+  }
+}

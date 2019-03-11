@@ -16,7 +16,7 @@ function certServer(caCert) {
         'Content-Type': 'text/html',
       });
       res.end(index);
-    } else if(req.url === '/symmetric_ca.crt') {
+    } else if (req.url === '/symmetric_ca.crt') {
       res.writeHead(200, {
         'Content-Length': Buffer.byteLength(cert),
         'Content-Type': 'application/x-x509-ca-cert',

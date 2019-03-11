@@ -2,7 +2,17 @@ const fs = require('fs');
 const zlib = require('zlib');
 const createSelfSignedCert = require('./ssl');
 
-const STANDARD_PATHS = ['api', 'login', 'logout', 'auth', 'deauth', 'setup', 'callback', 'static', '__debug__'];
+const STANDARD_PATHS = [
+  'api',
+  'login',
+  'logout',
+  'auth',
+  'deauth',
+  'setup',
+  'callback',
+  'static',
+  '__debug__',
+];
 const STANDARD_SUBPATHS = [];
 const BACKEND_COOKIE = 'proxybackend';
 
@@ -31,19 +41,17 @@ const BACKEND_COOKIE = 'proxybackend';
  */
 function createBackendProxy(options) {
   const debug = (process.env.DEBUG || '').indexOf('webpack') !== -1;
-  const {
-    backend,
-    paths = [],
-    subpaths = [],
-    insecure,
-    certServer,
-  } = options;
+  const { backend, paths = [], subpaths = [], insecure, generateCert, certServer } = options;
   const backendCookieRe = new RegExp(`${BACKEND_COOKIE}=${backend};?`);
   const sessionCookieRe = /sessionid=\w+;?/;
 
   // Remove any slashes from the paths
-  paths.forEach((path, i) => { paths[i] = path.replace(/\//g,''); });
-  subpaths.forEach((subpath, i) => { subpaths[i] = subpath.replace(/\//g,''); });
+  paths.forEach((path, i) => {
+    paths[i] = path.replace(/\//g, '');
+  });
+  subpaths.forEach((subpath, i) => {
+    subpaths[i] = subpath.replace(/\//g, '');
+  });
 
   // Add the standard paths
   paths.splice(-1, 0, ...STANDARD_PATHS);
@@ -65,14 +73,18 @@ function createBackendProxy(options) {
     // Use unmodified req.url with GET/HEAD requests and bypass the proxy
     bypass(req) {
       const parts = req.url.split('/');
-      if ((req.method !== 'GET' && req.method !== 'HEAD') || paths.indexOf(parts[1]) !== -1 || subpaths.indexOf(parts[2]) !== -1) {
+      if (
+        (req.method !== 'GET' && req.method !== 'HEAD') ||
+        paths.indexOf(parts[1]) !== -1 ||
+        subpaths.indexOf(parts[2]) !== -1
+      ) {
         return false;
       }
       return req.url;
     },
     // If backend does not match then remove the sessionid from the proxyReq to the backend
     // NOTE: args for onProxyReq are - proxyReq (ClientRequest), req (IncomingMessage), res (ServerResponse)
-    onProxyReq: (proxyReq) => {
+    onProxyReq(proxyReq) {
       const cookies = proxyReq.getHeader('cookie');
       if (cookies && !backendCookieRe.test(cookies)) {
         proxyReq.setHeader('cookie', cookies.replace(sessionCookieRe, ''));
@@ -81,7 +93,7 @@ function createBackendProxy(options) {
     // If backend cookie does not match or is missing then set it in the response from the backend
     // Also delete the sessionid cookie if a new one is not supplied by the backend
     // NOTE: args for onProxyRes are - proxyRes (IncomingMessage), req (IncomingMessage), res (ServerResponse)
-    onProxyRes: (proxyRes, req) => {
+    onProxyRes(proxyRes, req) {
       if (!backendCookieRe.test(req.headers.cookie || '')) {
         let resCookies = proxyRes.headers['set-cookie'] || [];
         if (!Array.isArray(resCookies)) resCookies = [resCookies];
@@ -89,7 +101,7 @@ function createBackendProxy(options) {
         expires.setDate(expires.getDate() + 365);
         resCookies.push(`${BACKEND_COOKIE}=${backend}; expires=${expires.toUTCString()}; path=/`);
         if (resCookies.filter(cookie => sessionCookieRe.test(cookie)).length === 0) {
-          resCookies.push(`sessionid=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/`)
+          resCookies.push(`sessionid=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/`);
         }
         proxyRes.headers['set-cookie'] = resCookies;
       }
@@ -113,15 +125,19 @@ function createBackendProxy(options) {
   } else {
     // Just in case of an insecure vagrant-based backend 30x redirects should be changed to secure
     proxy.protocolRewrite = 'https';
-    // Create the SSL cert only when webpack is running as a dev server
-    if (process.argv.find(arg => arg.includes('webpack-dev-server'))) {
+    // Create the SSL cert only when webpack is running as a dev server otherwise skip on webpack builds
+    if (
+      generateCert ||
+      process.env.GENERATE_CERT === 'true' ||
+      process.argv.find(arg => arg.includes('webpack-dev-server'))
+    ) {
       const sslFiles = createSelfSignedCert(options.ssl);
       // ssl options: https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
       proxy.ssl = {
         key: fs.readFileSync(sslFiles.key),
         cert: fs.readFileSync(sslFiles.cert),
       };
-      if (certServer || (process.env.CERT_SERVER && process.env.CERT_SERVER.toLowerCase() !== 'false')) {
+      if (certServer || process.env.CERT_SERVER === 'true') {
         const startServer = require('./server');
         startServer(sslFiles.caCert);
       }
@@ -133,13 +149,16 @@ function createBackendProxy(options) {
     const { onProxyRes } = proxy;
     proxy.onProxyRes = (proxyRes, req, res) => {
       if (onProxyRes) onProxyRes.call(proxy, proxyRes, req, res);
-      if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].indexOf('text/html') !== -1) {
+      if (
+        proxyRes.headers['content-type'] &&
+        proxyRes.headers['content-type'].indexOf('text/html') !== -1
+      ) {
         // Handle the data piping manually by disabling pipe()
         // Do not use selfHandleResponse options because it would disable a number of other features
         // https://github.com/nodejitsu/node-http-proxy/blob/e94d52973a26cf817a9de12d97e5ae603093f70d/lib/http-proxy/passes/web-incoming.js#L173
-        let body = new Buffer('');
+        let body = Buffer.alloc(0);
         proxyRes.pipe = () => {};
-        proxyRes.on('data', (data) => {
+        proxyRes.on('data', data => {
           body = Buffer.concat([body, data]);
         });
         proxyRes.on('end', () => {
