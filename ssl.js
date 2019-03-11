@@ -114,9 +114,10 @@ function createSelfSignedCert(options) {
   } catch (err) {}
   try {
     // Get public IP address
+    // OpenDNS may no longer work: dig +short myip.opendns.com @resolver1.opendns.com
     addIP(
       childProcess
-        .execSync('dig +short myip.opendns.com @resolver1.opendns.com')
+        .execSync('curl -s ifconfig.me')
         .toString()
         .trim(),
     );
