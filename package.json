@@ -1,6 +1,6 @@
 {
   "name": "webpack-symmetric",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Webpack dev server configurations for running a proxy to a backend including self-signed certs.",
   "license": "MIT",
   "main": "index.js",
@@ -8,6 +8,14 @@
     "release": "git tag $npm_package_version && git push --tags && yarn publish --no-lockfile",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": [
+    "index.js",
+    "LICENSE",
+    "README.md",
+    "server.html",
+    "server.js",
+    "ssl.js"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:symmetricapi/webpack-symmetric.git"
