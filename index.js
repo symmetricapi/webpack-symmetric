@@ -72,7 +72,7 @@ function createBackendProxy(options) {
     // Webpack specific bypass callback
     // Use unmodified req.url with GET/HEAD requests and bypass the proxy
     bypass(req) {
-      const parts = req.url.split('/');
+      const parts = req.url.split('?')[0].split('/');
       if (
         (req.method !== 'GET' && req.method !== 'HEAD') ||
         paths.indexOf(parts[1]) !== -1 ||
