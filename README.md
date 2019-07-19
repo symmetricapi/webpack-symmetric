@@ -6,7 +6,7 @@ This package exposes a single function `createBackendProxy({...})` which will ge
 
 The generated proxy configuration will do the following things:
 
--   Create request/response handlers that route to the backend any path starting with `api, login, logout, auth, deauth, setup, callback, static, __debug__` or anything from `options.paths` or any second-level path from `options.subpaths`.
+-   Create request/response handlers that route to the backend any path starting with anything from `options.paths` or any second-level path from `options.subpaths`.
 -   Reset `sessionid` cookies when switching between projects.
 -   Generate a self-signed root cert and add it as trusted to your keychain. So no browser warnings should ever popup.
 -   Generate a root signed cert used in the proxy, which includes standard alternate names of `localhost`, `<host>.local`, `127.0.0.1`, any other detected interface ips, and your externally facing ip.

@@ -2,18 +2,6 @@ const fs = require('fs');
 const zlib = require('zlib');
 const createSelfSignedCert = require('./ssl');
 
-const STANDARD_PATHS = [
-  'api',
-  'login',
-  'logout',
-  'auth',
-  'deauth',
-  'setup',
-  'callback',
-  'static',
-  '__debug__',
-];
-const STANDARD_SUBPATHS = [];
 const BACKEND_COOKIE = 'proxybackend';
 
 /**
@@ -52,10 +40,6 @@ function createBackendProxy(options) {
   subpaths.forEach((subpath, i) => {
     subpaths[i] = subpath.replace(/\//g, '');
   });
-
-  // Add the standard paths
-  paths.splice(-1, 0, ...STANDARD_PATHS);
-  subpaths.splice(-1, 0, ...STANDARD_SUBPATHS);
 
   const proxy = {
     target: backend,
