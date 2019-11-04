@@ -3,9 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const opensslCA = 'openssl req -x509 -nodes -days 9999 -sha256 -newkey rsa:2048';
+const opensslCA = 'openssl req -x509 -nodes -days 825 -sha256 -newkey rsa:2048';
 const opensslReq = 'openssl req -nodes -newkey rsa:2048';
-const opensslSign = 'openssl x509 -req -days 9999 -sha256';
+const opensslSign = 'openssl x509 -req -days 825 -sha256';
 const caSubj = '"/C=US/ST=California/L=Berkeley/O=Symmetric/OU=Engineering/CN=Symmetric Proxy CA"';
 const subj = '"/C=US/ST=California/L=Berkeley/O=Symmetric/OU=Engineering/CN=Symmetric Proxy"';
 const keymoji = '\u{1F510} ';
