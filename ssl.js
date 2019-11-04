@@ -62,6 +62,7 @@ function createSelfSignedCert(options) {
 
     [ v3_ca ]
     basicConstraints=CA:true
+    extendedKeyUsage=serverAuth
     `.replace(/ {2}/g, '');
     fs.writeFileSync(caExt, caExtData);
 
